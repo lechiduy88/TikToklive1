@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển</title>
+  <style>
+    :root {
+      --bg: #0f1424; --panel: #182038; --text: #eef2ff; --muted: #9aa7c7;
+      --red: #ff4d5e; --blue: #3da5ff; --gold: #ffd54a; --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { margin: 0 0 4px; font-size: 28px; }
+    .status { color: var(--muted); margin-bottom: 20px; }
+    section { background: var(--panel); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    h2 { margin: 0 0 12px; font-size: 16px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); flex: 1 1 160px; }
+    input { padding: 10px 12px; border-radius: 10px; border: 1px solid #2c3658; background: #0b1020; color: var(--text); font-size: 16px; }
+    button { padding: 12px 16px; border: 0; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer;
+      background: #2c3658; color: var(--text); transition: transform .08s ease, filter .15s ease; }
+    button:hover { filter: brightness(1.2); }
+    button:active { transform: scale(.96); }
+    button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    .red { background: var(--red); } .blue { background: var(--blue); } .gold { background: var(--gold); color: #111; }
+    .log { font-family: ui-monospace, monospace; font-size: 13px; color: var(--muted); max-height: 160px; overflow: auto; margin: 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Bảng điều khiển</h1>
+  <p class="status" id="status">Đang kết nối...</p>
+
+  <section aria-labelledby="who">
+    <h2 id="who">Người xem giả lập</h2>
+    <div class="row">
+      <label>ID <input id="uid" value="test_user"></label>
+      <label>Tên hiển thị <input id="uname" value="Người thử"></label>
+    </div>
+  </section>
+
+  <section aria-labelledby="sea">
+    <h2 id="sea">SEA Games: chọn đội tuyển</h2>
+    <div class="row">
+      <button class="red" data-action='{"type":"comment","text":"VN"}'>Gõ "VN" (Việt Nam)</button>
+      <button class="blue" data-action='{"type":"comment","text":"TH"}'>Gõ "TH" (Thái Lan)</button>
+      <button data-action='{"type":"comment","text":"ID"}'>Gõ "ID" (Indonesia)</button>
+      <button class="gold" data-action='{"type":"comment","text":"PH"}'>Gõ "PH" (Philippines)</button>
+      <button data-action='{"type":"comment","text":"MY"}'>Gõ "MY" (Malaysia)</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="free">
+    <h2 id="free">Tương tác miễn phí</h2>
+    <div class="row">
+      <button class="red" data-action='{"type":"comment","text":"1"}'>Gõ "1" (vào ĐỎ)</button>
+      <button class="blue" data-action='{"type":"comment","text":"2"}'>Gõ "2" (vào XANH)</button>
+      <button data-action='{"type":"comment","text":"cố lên"}'>Bình luận</button>
+      <button data-action='{"type":"like","count":15}'>15 tim</button>
+      <button data-action='{"type":"follow"}'>Follow</button>
+      <button data-action='{"type":"share"}'>Share</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="gifts">
+    <h2 id="gifts">Quà</h2>
+    <div class="row">
+      <button class="gold" data-action='{"type":"gift","diamonds":1,"count":1,"giftName":"Hoa hồng"}'>Hoa hồng ×1 (1💎)</button>
+      <button class="gold" data-action='{"type":"gift","diamonds":1,"count":10,"giftName":"Hoa hồng"}'>Hoa hồng ×10</button>
+      <button class="gold" data-action='{"type":"gift","diamonds":5,"count":1,"giftName":"Kem"}'>Kem (5💎)</button>
+      <button class="gold" data-action='{"type":"gift","diamonds":299,"count":1,"giftName":"Nhẫn"}'>Nhẫn (299💎)</button>
+      <button class="gold" data-action='{"type":"gift","diamonds":29999,"count":1,"giftName":"Sư tử"}'>Sư tử (rồng)</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="logh">
+    <h2 id="logh">Nhật ký</h2>
+    <pre class="log" id="log"></pre>
+  </section>
+</main>
+<script type="module">
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('log');
+  let socket;
+
+  function log(text) {
+    logEl.textContent = `${new Date().toLocaleTimeString()} ${text}\n${logEl.textContent}`.slice(0, 4000);
+  }
+
+  function connect() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    socket = new WebSocket(`${proto}://${location.host}/ws`);
+    socket.addEventListener('open', () => { statusEl.textContent = 'Đã kết nối server game'; });
+    socket.addEventListener('close', () => { statusEl.textContent = 'Mất kết nối, đang thử lại...'; setTimeout(connect, 2000); });
+    socket.addEventListener('message', (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.type !== 'status') return;
+      const lock = data.controlEnabled === false ? ' — ĐANG KHOÁ (chạy với ALLOW_CONTROL=1 để bật)' : '';
+      statusEl.textContent = `Nguồn: ${data.status.message}${lock}`;
+    });
+  }
+
+  document.querySelectorAll('button[data-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const user = { id: document.getElementById('uid').value.trim(), name: document.getElementById('uname').value.trim() };
+      if (!user.id || !user.name) { log('Cần nhập ID và tên'); return; }
+      const action = { ...JSON.parse(button.dataset.action), user };
+      if (socket?.readyState !== WebSocket.OPEN) { log('Chưa kết nối server'); return; }
+      socket.send(JSON.stringify({ type: 'action', action }));
+      log(`${user.name}: ${button.textContent}`);
+    });
+  });
+
+  connect();
+</script>
+</body>
+</html>

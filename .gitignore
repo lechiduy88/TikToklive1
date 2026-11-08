@@ -1,1 +1,6 @@
 .kiro/
+node_modules/
+data/
+*.tmp
+.env
+.playwright-mcp/
