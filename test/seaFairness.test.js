@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createMatch, applyAction, tick, toSnapshot } from '../server/sea/engine.js';
-import { SEA_PHASE_MS, SEA_SCALE, SEA_XP } from '../server/sea/config.js';
+import { SEA_PHASE_MS, SEA_SCALE, SEA_XP, DRAGON_BOAT } from '../server/sea/config.js';
 
 const rng = () => 0.5;
 const user = (id) => ({ id, name: `Fan ${id}` });
@@ -85,7 +85,7 @@ test('medal xp needs a real contribution, not a single last-second comment', () 
   let state = liveWith([['a', 'VN']]);
   for (let i = 0; i < 40; i += 1) state = applyAction(state, gift('a', 99), liveAt + 10).state;
   state = applyAction(state, comment('late', 'VN'), liveAt + 20).state;
-  const { events } = run(state, liveAt, liveAt + 90_000, 100);
+  const { events } = run(state, liveAt, liveAt + DRAGON_BOAT.maxMs + 1_000, 100);
   const xp = Object.fromEntries(events.find((e) => e.type === 'match_end').result.participants.map((p) => [p.id, p.xp]));
   assert.ok(xp.a >= SEA_XP.gold);
   assert.ok(xp.late < SEA_XP.gold, `late joiner xp ${xp.late}`);

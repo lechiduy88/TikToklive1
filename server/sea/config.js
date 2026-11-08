@@ -27,8 +27,9 @@ export const SEA_PHASE_MS = Object.freeze({
 });
 
 export const SEA_SESSION = Object.freeze({
-  eventsPerSession: Number(process.env.EVENTS_PER_SESSION) || 6,
-  eventCycle: Object.freeze(['dragon_boat', 'archery', 'weightlifting']),
+  // Chỉ các môn mà tương tác của người xem quyết định trực tiếp kết quả; mỗi kỳ chơi đủ 3 môn (~1.5–2.5 phút/môn).
+  eventsPerSession: Number(process.env.EVENTS_PER_SESSION) || 3,
+  eventCycle: Object.freeze(['dragon_boat', 'marathon', 'weightlifting']),
 });
 
 // Quy đổi tương tác => "sức tiếp" (effort) cho đội.
@@ -52,8 +53,8 @@ export const SEA_EFFORT = Object.freeze({
 //  Đầu mỗi môn, phần để dành được nhả tối đa carryShare × scale.
 export const SEA_SCALE = Object.freeze({
   defaultRate: 4,
-  targetSeconds: 45,
-  minScale: 40,
+  targetSeconds: 100, // một đội tiếp sức ở mức trung bình cần ~100 giây để hoàn thành môn
+  minScale: 80,
   emaWeight: 0.5,
   giftShare: 0.35, // một món quà
   athleteGiftShare: 0.6, // tổng quà của MỘT người trong một môn (nhiều người cùng đội thì cộng dồn được)
@@ -77,13 +78,14 @@ export const SEA_BALANCE = Object.freeze({
 });
 
 // Đua thuyền rồng: cộng dồn tới đích (scale sức tiếp = cả đường đua).
-export const DRAGON_BOAT = Object.freeze({ track: 1000, finishers: 3, maxMs: 80_000, buffMinLead: 150 });
+export const DRAGON_BOAT = Object.freeze({ track: 1000, finishers: 3, maxMs: 150_000, buffMinLead: 150 });
 
-// Bắn cung: mỗi volleyEveryMs cả 5 đội bắn; đội tiếp sức nhiều nhất trong lượt ngắm bắn chuẩn nhất.
-export const ARCHERY = Object.freeze({ volleys: 6, volleyEveryMs: 7_000, spread: 10, focus: 0.75, buffMinLead: 6 });
+// Chạy marathon (sức bền): sức tiếp tăng TỐC ĐỘ, tốc độ còn lại keepPerSecond mỗi giây nếu không ai cổ vũ
+// => phải cổ vũ đều tay suốt durationMs. Đội tiếp sức ở mức trung bình chạy được khoảng expectedMeters.
+export const MARATHON = Object.freeze({ durationMs: 120_000, keepPerSecond: 0.75, expectedMeters: 4_000, buffMinLead: 200 });
 
-// Cử tạ: mỗi lượt roundMs, đội có lực nâng thấp nhất bị loại; đội trụ lại cuối giành Vàng.
-export const WEIGHTLIFTING = Object.freeze({ roundMs: 10_000, buffMinLead: 3 });
+// Cử tạ: mỗi lượt roundMs, đội có lực nâng thấp nhất bị loại; đội trụ lại cuối giành Vàng (4 lượt ≈ 100 giây).
+export const WEIGHTLIFTING = Object.freeze({ roundMs: 25_000, buffMinLead: 3 });
 
 // XP mỗi môn (lưu qua nhiều buổi live). Phần từ quà bị giới hạn để cấp độ không "mua" được.
 export const SEA_XP = Object.freeze({

@@ -6,7 +6,7 @@ import { createSeaFx } from './fx.js';
 import { createCommentary } from './commentary.js';
 import { drawStadium, drawOpening, drawIntro, drawPodium, drawClosing } from './screens.js';
 import { drawBoatRace, resetBoatRace } from './events/boat.js';
-import { drawArcheryRange, resetArchery } from './events/archery.js';
+import { drawMarathon, resetMarathon } from './events/marathon.js';
 import { drawLiftingStage, resetLifting } from './events/lift.js';
 
 const RECONNECT_MS = 2000;
@@ -26,7 +26,7 @@ let lastEventKey = null;
 
 const EVENT_SCENES = Object.freeze({
   dragon_boat: { draw: drawBoatRace, reset: resetBoatRace },
-  archery: { draw: drawArcheryRange, reset: resetArchery },
+  marathon: { draw: drawMarathon, reset: resetMarathon },
   weightlifting: { draw: drawLiftingStage, reset: resetLifting },
 });
 

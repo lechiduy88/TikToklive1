@@ -5,7 +5,7 @@ import { outlinedText, truncate } from '../text.js';
 import { TEAMS, teamOf, ARENA, MEDAL_EMOJI, MEDAL_COLOR } from './teams.js';
 import { drawFlag, drawFlagOnPole } from './flags.js';
 
-const NAMES = Object.freeze({ dragon_boat: '🚣 Đua thuyền rồng', archery: '🎯 Bắn cung', weightlifting: '🏋️ Cử tạ' });
+const NAMES = Object.freeze({ dragon_boat: '🚣 Đua thuyền rồng', marathon: '🏃 Chạy marathon', weightlifting: '🏋️ Cử tạ' });
 let stadium = null;
 
 function renderStadium() {
@@ -58,7 +58,7 @@ export function drawOpening(ctx, state, now) {
   drawAllTime(ctx, state.allTime, ARENA.top + 930, now);
 }
 
-const SCHEDULE_ICON = Object.freeze({ dragon_boat: '🚣', archery: '🎯', weightlifting: '🏋️' });
+const SCHEDULE_ICON = Object.freeze({ dragon_boat: '🚣', marathon: '🏃', weightlifting: '🏋️' });
 
 function drawSchedule(ctx, order, y) {
   if (!order.length) return;

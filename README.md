@@ -14,10 +14,10 @@ Màn hình dọc 9:16 (1080×1920), đưa vào **TikTok LIVE Studio** hoặc **O
 Người xem gõ `VN`, `TH`, `ID`, `PH`, `MY` (hoặc `1`–`5`, hoặc tên nước) để vào đội tuyển. Mỗi **kỳ đại hội** (~7–8 phút):
 
 1. **Khai mạc** (20s): chọn đội, xem lịch thi đấu và bảng tổng sắp toàn mùa.
-2. **6 môn thi** xoay vòng, mỗi môn: giới thiệu → thi đấu → bục trao huy chương 🥇🥈🥉 (chỉ đội có tham gia mới được huy chương).
-   - 🚣 **Đua thuyền rồng**: sức tiếp cộng dồn thành quãng đường; 3 thuyền về đích đầu giành huy chương. Thuyền đi sau được đẩy thêm (bám đuổi).
-   - 🎯 **Bắn cung**: cứ 7 giây cả 5 đội bắn một loạt; đội tiếp sức nhiều nhất trong lượt ngắm bắn chuẩn nhất.
-   - 🏋️ **Cử tạ**: mỗi lượt 10 giây, đội nâng yếu nhất bị loại; đội trụ lại cuối giành Vàng.
+2. **3 môn thi** (mỗi môn ~1.5–2.5 phút, chỉ các môn mà tương tác của người xem quyết định trực tiếp kết quả), mỗi môn: giới thiệu → thi đấu → bục trao huy chương 🥇🥈🥉 (chỉ đội có tham gia mới được huy chương).
+   - 🚣 **Đua thuyền rồng**: sức tiếp cộng dồn thành quãng đường; 3 thuyền về đích đầu giành huy chương (tối đa 2.5 phút).
+   - 🏃 **Chạy marathon** (2 phút): sức tiếp làm vận động viên tăng tốc, **ngừng cổ vũ là chậm lại** — phải cổ vũ liên tục; xếp hạng theo quãng đường khi hết giờ.
+   - 🏋️ **Cử tạ**: 4 lượt × 25 giây, đội nâng yếu nhất mỗi lượt bị loại; đội trụ lại cuối giành Vàng.
 3. **Bế mạc**: quốc gia vô địch (bằng nhau tuyệt đối thì đồng vô địch), vận động viên xuất sắc.
 
 Đội tuyển của mỗi người được giữ sang kỳ sau. Bảng tổng sắp toàn mùa lưu ở `data/medals.json`.
@@ -44,7 +44,7 @@ Người xem gõ `VN`, `TH`, `ID`, `PH`, `MY` (hoặc `1`–`5`, hoặc tên nư
 | Đội ít người | √(số người đội đông nhất / đội mình) | ×2.5 |
 | Tổng (nhân các lớp) | | ×6 |
 
-Đo bằng giả lập 8 kỳ × 6 môn, khi một nước có **35% khán giả**: trước khi cân bằng nước đó giành 33/48 HC Vàng và vô địch 8/8 kỳ; sau khi cân bằng là 18/48 Vàng, vô địch 4/8 kỳ, mọi nước đều có Vàng. Khi một nước chiếm **55%** khán giả họ vẫn mạnh nhất (28/48 Vàng) — đông người vẫn được ưu thế xứng đáng. Chỉnh độ mạnh trong `SEA_BALANCE` ([server/sea/config.js](server/sea/config.js)).
+Đo bằng giả lập 8 kỳ × 6 môn (phiên bản có bắn cung, trước khi đổi sang 3 môn tương tác), khi một nước có **35% khán giả**: trước khi cân bằng nước đó giành 33/48 HC Vàng và vô địch 8/8 kỳ; sau khi cân bằng là 18/48 Vàng, vô địch 4/8 kỳ, mọi nước đều có Vàng. Khi một nước chiếm **55%** khán giả họ vẫn mạnh nhất (28/48 Vàng) — đông người vẫn được ưu thế xứng đáng. Chỉnh độ mạnh trong `SEA_BALANCE` ([server/sea/config.js](server/sea/config.js)).
 
 Thông số trong [server/sea/config.js](server/sea/config.js). Biến môi trường rút ngắn để thử: `OPENING_SECONDS`, `INTRO_SECONDS`, `PODIUM_SECONDS`, `CLOSING_SECONDS`, `EVENTS_PER_SESSION`.
 
@@ -128,7 +128,7 @@ server/
     config.js         đội tuyển, độ dài giai đoạn, cân bằng sức tiếp/quà
     engine.js         vòng đời kỳ đại hội: khai mạc → môn thi × N → bế mạc
     actions.js        tương tác → chọn đội + sức tiếp (giới hạn quà, để dành)
-    events/           các môn: dragonBoat, archery, weightlifting
+    events/           các môn: dragonBoat, marathon, weightlifting
     medals.js         bảng tổng sắp; roster.js đội tuyển; snapshot.js dữ liệu màn hình
   config.js           thông số cân bằng chế độ 2 phe
   game/               chế độ 2 phe (logic thuần, có unit test)

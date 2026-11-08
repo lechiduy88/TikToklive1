@@ -3,7 +3,8 @@
 import { teamOf } from './teams.js';
 
 const LEADER_COOLDOWN_MS = 3500; // không hô "vượt lên" liên tục khi hai đội giằng co từng giây
-const MIN_LEAD = Object.freeze({ dragon_boat: 120, archery: 5, weightlifting: 3 });
+const MIN_LEAD = Object.freeze({ dragon_boat: 120, marathon: 150, weightlifting: 3 });
+const LAST_SECONDS_MS = 20_000;
 const NEAR_FINISH = 0.8;
 
 function standingOf(event) {
@@ -12,7 +13,7 @@ function standingOf(event) {
   if (event.id === 'dragon_boat') {
     return Object.fromEntries(Object.entries(v.pos).filter(([t]) => !v.finished.includes(t)));
   }
-  if (event.id === 'archery') return v.totals;
+  if (event.id === 'marathon') return v.pos;
   if (event.id === 'weightlifting') return Object.fromEntries(v.alive.map((t) => [t, v.meter[t]]));
   return null;
 }
@@ -54,7 +55,7 @@ export function createCommentary(fx) {
       const top = Math.max(...Object.values(view.pos));
       if (top >= view.track * NEAR_FINISH && view.finished.length === 0) once('near', '🏁 SẮP VỀ ĐÍCH!', null, now);
     }
-    if (id === 'archery' && view.volley === view.volleys - 1) once('last-volley', '🎯 LOẠT CUỐI QUYẾT ĐỊNH!', null, now);
+    if (id === 'marathon' && view.endsInMs <= LAST_SECONDS_MS) once('last-sprint', '🏃 20 GIÂY CUỐI · NƯỚC RÚT!', null, now);
     if (id === 'weightlifting' && view.alive.length === 2) once('final', '🏋️ CHUNG KẾT: CHỈ CÒN 2 ĐỘI!', null, now);
   }
 

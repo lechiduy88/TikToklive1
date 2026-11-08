@@ -2,10 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { eventBuffs, medalBuffs, combineBuffs, medalPoints, sizeBuffs } from '../server/sea/balance.js';
-import { SEA_BALANCE, SEA_PHASE_MS } from '../server/sea/config.js';
+import { SEA_BALANCE, SEA_PHASE_MS, WEIGHTLIFTING } from '../server/sea/config.js';
 import { createMatch, applyAction, tick, toSnapshot } from '../server/sea/engine.js';
 import { dragonBoat } from '../server/sea/events/dragonBoat.js';
-import { archery } from '../server/sea/events/archery.js';
+import { marathon } from '../server/sea/events/marathon.js';
 import { weightlifting } from '../server/sea/events/weightlifting.js';
 
 const rng = () => 0.5;
@@ -69,14 +69,14 @@ test('every event reports a standing of the teams still competing', () => {
   let boat = dragonBoat.create(0, 100);
   boat = dragonBoat.addEffort(boat, 'vn', 30).state;
   assert.equal(dragonBoat.standing(boat).vn, 300);
-  let arch = archery.create(0);
-  arch = archery.addEffort(arch, 'th', 5).state;
-  arch = archery.step(arch, 50, 7_000, rng).state;
-  assert.ok(archery.standing(arch).th > 0);
+  let run = marathon.create(0, 100);
+  run = marathon.addEffort(run, 'th', 5).state;
+  run = marathon.step(run, 1000, 1000).state;
+  assert.ok(marathon.standing(run).th > 0);
   let lift = weightlifting.create(0);
   lift = weightlifting.addEffort(lift, 'id', 9).state;
   assert.equal(weightlifting.standing(lift).id, 9);
-  lift = weightlifting.step(lift, 50, 10_000).state; // một đội bị loại
+  lift = weightlifting.step(lift, 50, WEIGHTLIFTING.roundMs).state; // hết lượt 1: một đội bị loại
   assert.equal(Object.keys(weightlifting.standing(lift)).length, 4);
 });
 

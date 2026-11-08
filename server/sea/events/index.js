@@ -1,11 +1,12 @@
-// Danh sách môn thi. Thêm môn mới: tạo module cùng giao diện
-// (create / accepts / addEffort / step / ranking / view) và đăng ký ở đây.
+// Danh sách môn thi. Chỉ các môn mà tương tác người xem quyết định trực tiếp kết quả.
+// Thêm môn mới: tạo module cùng giao diện (create / accepts / addEffort / standing / step / ranking / view),
+// đăng ký ở đây và thêm vào SEA_SESSION.eventCycle.
 import { dragonBoat } from './dragonBoat.js';
-import { archery } from './archery.js';
+import { marathon } from './marathon.js';
 import { weightlifting } from './weightlifting.js';
 
 export const EVENT_MODULES = Object.freeze({
   [dragonBoat.id]: dragonBoat,
-  [archery.id]: archery,
+  [marathon.id]: marathon,
   [weightlifting.id]: weightlifting,
 });

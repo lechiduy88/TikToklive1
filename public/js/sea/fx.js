@@ -70,11 +70,6 @@ export function createSeaFx() {
       const medal = MEDAL_EMOJI[PLACE_MEDAL[e.place - 1]] ?? '🏁';
       banner(`${medal} ${teamOf(e.team).name.toUpperCase()} VỀ ĐÍCH!`, `hạng ${e.place}`, e.team, now, 2400);
     },
-    volley: (e, now) => {
-      for (const r of e.results) addFloater(r.team, r.score === 0 ? 'trượt' : `+${r.score}`, now, { y: 1010, size: r.score >= 9 ? 48 : 34, color: r.score === 10 ? '#ffd54a' : undefined });
-      const bull = e.results.find((r) => r.score === 10);
-      if (bull) banner('🎯 HỒNG TÂM!', `${teamOf(bull.team).name} bắn 10 điểm`, bull.team, now, 1800);
-    },
     eliminated: (e, now) => {
       banner(`❌ ${teamOf(e.team).name.toUpperCase()} BỊ LOẠI`, `lượt ${e.round} · còn lại tiếp tục nâng!`, e.team, now, 2200);
       shakeUntil = now + 300;

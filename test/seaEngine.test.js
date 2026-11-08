@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createMatch, applyAction, tick, toSnapshot } from '../server/sea/engine.js';
-import { SEA_PHASE_MS, SEA_SESSION, SEA_EFFORT, SEA_SCALE, ARCHERY, DRAGON_BOAT } from '../server/sea/config.js';
+import { SEA_PHASE_MS, SEA_SESSION, SEA_EFFORT, SEA_SCALE, DRAGON_BOAT } from '../server/sea/config.js';
 
 const rng = () => 0.5;
 const user = (id) => ({ id, name: `Fan ${id}` });
@@ -166,10 +166,17 @@ test('the event scale adapts to how lively the stream is', () => {
   assert.ok(q.eventScale >= SEA_SCALE.minScale);
 });
 
-test('archery volleys are forwarded as events during the live phase', () => {
-  let state = createMatch(0, rng, { session: 2 }); // phiên 2 bắt đầu bằng bắn cung
+test('the marathon runs live: cheering moves the runner during the event', () => {
+  let state = createMatch(0, rng, { session: 2 }); // kỳ 2 mở màn bằng marathon
+  state = applyAction(state, comment('a', 'TH'), 0).state;
   state = run(state, 0, liveAt).state;
-  assert.equal(toSnapshot(state, liveAt, () => 1).event.id, 'archery');
-  const r = run(state, liveAt, liveAt + ARCHERY.volleyEveryMs);
-  assert.ok(r.events.some((e) => e.type === 'volley'));
+  assert.equal(toSnapshot(state, liveAt, () => 1).event.id, 'marathon');
+  state = applyAction(state, gift('a', 99), liveAt + 10).state;
+  const r = run(state, liveAt + 10, liveAt + 5_000);
+  assert.ok(toSnapshot(r.state, liveAt + 5_000, () => 1).event.view.pos.th > 0);
+});
+
+test('a session has one of each interactive event', () => {
+  const state = createMatch(0, rng);
+  assert.deepEqual([...state.eventOrder].sort(), ['dragon_boat', 'marathon', 'weightlifting']);
 });

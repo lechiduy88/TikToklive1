@@ -11,7 +11,12 @@
   <style>
     html, body { margin: 0; height: 100%; background: #0b0f1a; overflow: hidden; }
     body { display: flex; align-items: center; justify-content: center; }
-    canvas { height: 100vh; max-width: 100vw; aspect-ratio: 9 / 16; display: block; }
+    /* Luôn vừa khít cửa sổ (dọc hay ngang) và giữ đúng tỉ lệ 9:16 */
+    canvas {
+      display: block;
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+    }
   </style>
 </head>
 <body>
