@@ -6,12 +6,15 @@ import { EVENT_MODULES } from './events/index.js';
 import { buffsFor } from './balance.js';
 
 const SWITCH_PHASES = new Set(['opening', 'intro', 'podium', 'closing']);
+const SWITCH_LOCK_EFFORT = 5;
 
 function register(state, user, requested, now) {
   const { athletes, athlete, joined } = ensureAthlete(state.athletes, user, requested);
   if (joined) return { state: { ...state, athletes }, athlete, events: [{ type: 'join', name: athlete.name, team: athlete.team }] };
-  // Ngoài lúc đang thi, gõ mã nước khác để đổi đội.
-  if (requested && requested !== athlete.team && SWITCH_PHASES.has(state.phase)) {
+  // Ngoài lúc đang thi, gõ mã nước khác để đổi đội — trừ khi đã góp thật cho đội cũ trong kỳ này
+  // (chống "nhảy sang đội nhỏ để ăn buff ít người").
+  const locked = athlete.effort >= SWITCH_LOCK_EFFORT;
+  if (requested && requested !== athlete.team && SWITCH_PHASES.has(state.phase) && !locked) {
     const moved = updateAthlete(athletes, athlete.id, { team: requested });
     return { state: { ...state, athletes: moved }, athlete: moved[athlete.id], events: [{ type: 'join', name: athlete.name, team: requested }] };
   }

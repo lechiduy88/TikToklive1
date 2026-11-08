@@ -14,6 +14,9 @@ const PLACE_MEDAL = ['gold', 'silver', 'bronze'];
 const CONFETTI_COLORS = ['#ffd54a', '#e8384f', '#3d6bff', '#16b39a', '#ff8c1a', '#ffffff'];
 const BANNER_Y = 760;
 const CEREMONY_BANNER_Y = 440;
+const CALLOUT_TTL = 2200;
+const CALLOUT_Y = 470;
+const CALLOUT_SLIDE_MS = 260;
 
 export function createSeaFx() {
   let feed = [];
@@ -24,11 +27,14 @@ export function createSeaFx() {
   let shakeUntil = 0;
 
   const addFeed = (team, text, now) => { feed = [{ team, text, born: now }, ...feed].slice(0, FEED_MAX); };
-  const addFloater = (team, text, now, { size = 36, color, y = 1290 } = {}) => {
+  // Mặc định bay lên từ giữa-dưới sân (trên các thẻ điểm/nhãn kg), không đè lên số liệu.
+  const addFloater = (team, text, now, { size = 36, color, y = 1000 } = {}) => {
     const x = columnX(team) + (Math.random() - 0.5) * 60;
     floaters = [...floaters, { text, x, y, color: color ?? teamOf(team).light, born: now, ttl: 1500, size }].slice(-MAX_FLOATERS);
   };
-  const banner = (title, subtitle, team, now, ttl = 2600) => { banners = [...banners, { title, subtitle, team, born: now, ttl }].slice(-2); };
+  // Mỗi lúc chỉ một banner lớn, để không che kín sân thi đấu.
+  const banner = (title, subtitle, team, now, ttl = 2600) => { banners = [{ title, subtitle, team, born: now, ttl }]; };
+  let callouts = [];
   const burst = (count, now) => {
     const pieces = Array.from({ length: count }, () => ({
       x: Math.random() * W, y: 180 + Math.random() * 100, vx: (Math.random() - 0.5) * 300, vy: 200 + Math.random() * 400,
@@ -42,9 +48,9 @@ export function createSeaFx() {
     gift: (e, now) => {
       addFeed(e.team, `🎁 ${truncate(e.name, 12)} tặng ${e.count}× ${truncate(e.giftName, 10)}`, now);
       addFloater(e.team, `🎁 ${truncate(e.name, 8)}`, now, { size: e.tier === 'small' ? 30 : 42, color: '#ffd54a' });
-      if (e.tier === 'small') return;
-      banner(`🎁 ${truncate(e.name, 14).toUpperCase()}`, `tiếp sức cho ${teamOf(e.team).name}!`, e.team, now, 2800);
+      // Quà vừa: dòng thông báo + chữ bay là đủ; banner lớn + diễu hành cờ chỉ dành cho quà cực lớn.
       if (e.tier === 'mega') {
+        banner(`🎁 ${truncate(e.name, 14).toUpperCase()}`, `tiếp sức cho ${teamOf(e.team).name}!`, e.team, now, 2800);
         parades = [...parades, { team: e.team, name: e.name, born: now, ttl: 3200 }].slice(-2);
         shakeUntil = now + 700;
         burst(120, now);
@@ -52,8 +58,9 @@ export function createSeaFx() {
     },
     underdog: (e, now) => {
       const t = teamOf(e.team);
-      banner(`🔥 ${t.name.toUpperCase()} LỘI NGƯỢC DÒNG!`, `sức tiếp ×${e.multiplier} · gõ ${t.short} để tiếp sức!`, e.team, now, 2600);
-      addFeed(e.team, `🔥 ${t.name} được tiếp sức ×${e.multiplier}`, now);
+      // Dải băng bình luận gọn (không che sân) + dòng thông báo kêu gọi gõ mã đội.
+      callouts = [{ text: `🔥 ${t.name.toUpperCase()} LỘI NGƯỢC DÒNG! ×${e.multiplier}`, team: e.team, born: now, ttl: CALLOUT_TTL }];
+      addFeed(e.team, `🔥 ${t.name} được tiếp sức ×${e.multiplier} · gõ ${t.short} để kéo lên!`, now);
     },
     banked: (e, now) => {
       if (e.amount >= 5) addFeed(e.team, `💰 ${truncate(e.name, 12)}: +${e.amount} để dành cho môn sau`, now);
@@ -86,6 +93,10 @@ export function createSeaFx() {
     handleEvent(event, now) {
       HANDLERS[event.type]?.(event, now);
     },
+    /** Dải băng bình luận chéo màn hình (vượt lên dẫn đầu, sắp về đích...). */
+    callout(text, team, now) {
+      callouts = [...callouts, { text, team, born: now, ttl: CALLOUT_TTL }].slice(-1);
+    },
     shake(now) {
       if (now > shakeUntil) return { x: 0, y: 0 };
       const k = (shakeUntil - now) / 700;
@@ -98,6 +109,7 @@ export function createSeaFx() {
       floaters = floaters.filter((f) => now - f.born < f.ttl);
       banners = banners.filter((b) => now - b.born < b.ttl);
       parades = parades.filter((p) => now - p.born < p.ttl);
+      callouts = callouts.filter((c) => now - c.born < c.ttl);
       feed = feed.filter((f) => now - f.born < FEED_TTL);
     },
     /** ceremony = true ở các màn nghi lễ: banner đưa lên cao, ẩn chữ bay theo cột để không che bục/cờ. */
@@ -105,6 +117,7 @@ export function createSeaFx() {
       drawParades(ctx, parades, now);
       if (!ceremony) drawFloaters(ctx, floaters, now);
       drawBanners(ctx, banners, now, ceremony ? CEREMONY_BANNER_Y : BANNER_Y);
+      if (!ceremony) drawCallouts(ctx, callouts, now);
       drawConfetti(ctx, confetti, now);
     },
     drawFeed(ctx, now) {
@@ -141,6 +154,34 @@ function drawBanners(ctx, banners, now, baseY) {
     outlinedText(ctx, b.subtitle, textX, 48, { size: 32, stroke: 6, weight: 700 });
     ctx.restore();
   });
+}
+
+/** Dải băng nghiêng trượt vào từ trái, dừng giữa màn hình rồi trượt ra phải — kiểu truyền hình thể thao. */
+function drawCallouts(ctx, callouts, now) {
+  for (const c of callouts) {
+    const age = now - c.born;
+    const slideIn = Math.min(1, age / CALLOUT_SLIDE_MS);
+    const slideOut = Math.max(0, (age - (c.ttl - CALLOUT_SLIDE_MS)) / CALLOUT_SLIDE_MS);
+    const ease = (t) => 1 - (1 - t) ** 3;
+    const x = -W + ease(slideIn) * W + ease(slideOut) * W;
+    const color = c.team ? teamOf(c.team).color : '#ff6b3d';
+    const dark = c.team ? teamOf(c.team).dark : '#7a2a00';
+    ctx.save();
+    ctx.translate(x, CALLOUT_Y);
+    ctx.transform(1, 0, -0.18, 1, 0, 0); // nghiêng
+    const g = ctx.createLinearGradient(0, -52, 0, 52);
+    g.addColorStop(0, color);
+    g.addColorStop(1, dark);
+    shape(ctx, rrect(40, -50, W - 80, 100, 10), g, 5);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(48, -44, W - 96, 22);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(x, CALLOUT_Y);
+    if (c.team) drawFlag(ctx, c.team, 70, -32, 96, 64, now, 0.12);
+    outlinedText(ctx, c.text, W / 2 + (c.team ? 50 : 0), 2, { size: 46, color: '#fff', stroke: 8 });
+    ctx.restore();
+  }
 }
 
 function drawParades(ctx, parades, now) {

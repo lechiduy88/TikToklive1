@@ -76,6 +76,37 @@ function drawLifter(ctx, x, lift, teamId, out, now) {
   ctx.restore();
 }
 
+const GAUGE = Object.freeze({ top: 410, bottom: 790, w: 44 });
+
+/** Cột đo lực của từng đội: đầy = nâng mạnh nhất lượt này; đội sắp bị loại viền đỏ nhấp nháy. */
+function drawGauge(ctx, x, frac, teamId, out, danger, now) {
+  const t = teamOf(teamId);
+  const h = GAUGE.bottom - GAUGE.top;
+  shape(ctx, rrect(x - GAUGE.w / 2, GAUGE.top, GAUGE.w, h, 14), 'rgba(10,6,20,0.7)', 3);
+  if (!out && frac > 0) {
+    const fh = Math.max(14, (h - 8) * Math.min(1, frac));
+    shape(ctx, rrect(x - GAUGE.w / 2 + 4, GAUGE.bottom - 4 - fh, GAUGE.w - 8, fh, 10), grad(ctx, 0, GAUGE.bottom - fh, 0, GAUGE.bottom, [t.light, t.color, t.dark]), 0);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(x - GAUGE.w / 2 + 8, GAUGE.bottom - fh, 6, fh - 8);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 2;
+  for (let i = 1; i < 5; i += 1) {
+    const y = GAUGE.bottom - (h * i) / 5;
+    ctx.beginPath();
+    ctx.moveTo(x - GAUGE.w / 2 + 4, y);
+    ctx.lineTo(x - GAUGE.w / 2 + 14, y);
+    ctx.stroke();
+  }
+  if (danger) {
+    ctx.strokeStyle = `rgba(255,70,70,${0.55 + Math.sin(now / 110) * 0.45})`;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    rrect(x - GAUGE.w / 2 - 4, GAUGE.top - 4, GAUGE.w + 8, h + 8, 16)(ctx); // rrect có dự phòng cho OBS cũ
+    ctx.stroke();
+  }
+}
+
 function weakestAlive(view) {
   if (view.alive.length <= 1) return null;
   return [...view.alive].sort((a, b) => view.meter[a] - view.meter[b])[0];
@@ -95,6 +126,7 @@ export function drawLiftingStage(ctx, view, dt, now) {
     const target = out ? 0 : view.meter[team.id] / maxMeter;
     shown = { ...shown, [team.id]: (shown[team.id] ?? target) + (target - (shown[team.id] ?? target)) * k };
     drawFlag(ctx, team.id, x - 54, ARENA.top + 120, 108, 72, now, out ? 0 : 0.12);
+    drawGauge(ctx, x, shown[team.id], team.id, out, team.id === danger, now);
     drawLifter(ctx, x, shown[team.id], team.id, out, now);
     outlinedText(ctx, `${Math.round(view.meter[team.id] * KG_PER_EFFORT)} kg`, x, FLOOR_Y + 40, { size: 32, color: team.light, stroke: 6 });
     outlinedText(ctx, team.short, x, FLOOR_Y + 84, { size: 30, stroke: 6 });

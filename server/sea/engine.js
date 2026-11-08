@@ -3,7 +3,7 @@
 // Cùng giao diện với engine 2 phe (createMatch / tick / applyAction / toSnapshot) để server dùng chung.
 import { TEAM_IDS, SEA_PHASE_MS, SEA_SESSION, SEA_XP, SEA_SCALE, SEA_BALANCE } from './config.js';
 import { resetEventStats, carryAthletes, countByCountry } from './roster.js';
-import { buffsFor } from './balance.js';
+import { buffsFor, eventBuffsFor } from './balance.js';
 import { emptyTable, awardMedals, sortTable } from './medals.js';
 import { EVENT_MODULES } from './events/index.js';
 import { applySeaAction } from './actions.js';
@@ -152,22 +152,32 @@ function startClosing(state, now) {
   return { state: { ...enterPhase(state, 'closing', now), event: null, podium: null, closing }, events: [{ type: 'closing', ...closing }] };
 }
 
-/** Hô "LỘI NGƯỢC DÒNG" một lần cho mỗi đội (có người chơi) khi buff vượt ngưỡng trong môn. */
-function announceUnderdogs(state) {
-  const buffs = buffsFor(state);
+const UNDERDOG_CALL_GAP_MS = 6_000;
+
+/**
+ * Hô "LỘI NGƯỢC DÒNG" khi một đội (có người chơi) bị bỏ xa NGAY TRONG MÔN (buff huy chương/ít người
+ * luôn bật nên chỉ hiện huy hiệu, không hô). Mỗi đội một lần mỗi môn, mỗi lần chỉ một đội, cách nhau ≥ 6s.
+ */
+function announceUnderdogs(state, now) {
+  if (now - (state.lastUnderdogAt ?? -Infinity) < UNDERDOG_CALL_GAP_MS) return { state, events: [] };
+  const inEvent = eventBuffsFor(state);
   const players = countByCountry(state.athletes);
-  const fresh = TEAM_IDS.filter((t) => buffs[t] >= SEA_BALANCE.announceAt && players[t] > 0 && !state.underdogAnnounced.includes(t));
-  if (!fresh.length) return { state, events: [] };
+  const candidates = TEAM_IDS
+    .filter((t) => inEvent[t] >= SEA_BALANCE.announceAt && players[t] > 0 && !state.underdogAnnounced.includes(t))
+    .sort((a, b) => inEvent[b] - inEvent[a]);
+  if (!candidates.length) return { state, events: [] };
+  const team = candidates[0];
+  const total = buffsFor(state)[team];
   return {
-    state: { ...state, underdogAnnounced: [...state.underdogAnnounced, ...fresh] },
-    events: fresh.map((team) => ({ type: 'underdog', team, multiplier: Math.round(buffs[team] * 10) / 10 })),
+    state: { ...state, underdogAnnounced: [...state.underdogAnnounced, team], lastUnderdogAt: now },
+    events: [{ type: 'underdog', team, multiplier: Math.round(total * 10) / 10 }],
   };
 }
 
 function liveTick(state, dtMs, now, rng) {
   const mod = EVENT_MODULES[state.event.id];
   const stepped = mod.step(state.event.state, dtMs, now, rng);
-  const announced = announceUnderdogs({ ...state, event: { ...state.event, state: stepped.state } });
+  const announced = announceUnderdogs({ ...state, event: { ...state.event, state: stepped.state } }, now);
   const next = announced.state;
   if (!stepped.done && now < state.phaseEndsAt) return { state: next, events: [...stepped.events, ...announced.events] };
   const finished = finishEvent(next, now);

@@ -1,7 +1,6 @@
 // Tự cân bằng: đội bị bỏ xa được nhân sức tiếp để trận luôn có cạnh tranh. Không bao giờ trừ đội mạnh.
 import { SEA_BALANCE, TEAM_IDS } from './config.js';
 import { EVENT_MODULES } from './events/index.js';
-import { countByCountry } from './roster.js';
 
 const ones = () => Object.fromEntries(TEAM_IDS.map((t) => [t, 1]));
 
@@ -51,6 +50,13 @@ export function sizeBuffs(counts) {
   }));
 }
 
+/** Số cổ động viên ĐÃ tiếp sức trong kỳ của mỗi đội (người chỉ đăng ký rồi đứng xem không tính). */
+export function activeCounts(athletes) {
+  const counts = Object.fromEntries(TEAM_IDS.map((t) => [t, 0]));
+  for (const a of Object.values(athletes)) if (a.effort > 0 && Object.hasOwn(counts, a.team)) counts[a.team] += 1;
+  return counts;
+}
+
 /** Nhân các lớp buff, giới hạn ở maxTotal. */
 export function combineBuffs(...layers) {
   return Object.fromEntries(TEAM_IDS.map((t) => [
@@ -58,9 +64,16 @@ export function combineBuffs(...layers) {
   ]));
 }
 
+/** Chỉ lớp buff trong môn (để hô "lội ngược dòng" khi đội thực sự bị bỏ xa ngay trong môn). */
+export function eventBuffsFor(state) {
+  if (state.phase !== 'live' || !state.event?.state) return ones();
+  const mod = EVENT_MODULES[state.event.id];
+  return eventBuffs(mod.standing(state.event.state), mod.buffMinLead);
+}
+
 /** Buff hiện tại của mỗi đội trong trạng thái đại hội. */
 export function buffsFor(state) {
-  const base = [medalBuffs(state.medals), sizeBuffs(countByCountry(state.athletes))];
+  const base = [medalBuffs(state.medals), sizeBuffs(activeCounts(state.athletes))];
   if (state.phase !== 'live' || !state.event?.state) return combineBuffs(...base);
   const mod = EVENT_MODULES[state.event.id];
   return combineBuffs(eventBuffs(mod.standing(state.event.state), mod.buffMinLead), ...base);

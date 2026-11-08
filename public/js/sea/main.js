@@ -3,6 +3,7 @@ import { W, H } from '../layout.js';
 import { outlinedText, FONT_FAMILY } from '../text.js';
 import { drawSeaHud } from './hud.js';
 import { createSeaFx } from './fx.js';
+import { createCommentary } from './commentary.js';
 import { drawStadium, drawOpening, drawIntro, drawPodium, drawClosing } from './screens.js';
 import { drawBoatRace, resetBoatRace } from './events/boat.js';
 import { drawArcheryRange, resetArchery } from './events/archery.js';
@@ -15,6 +16,7 @@ const CEREMONY_PHASES = new Set(['opening', 'intro', 'podium', 'closing']);
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const fx = createSeaFx();
+const commentary = createCommentary(fx);
 
 for (const weight of [700, 800]) document.fonts?.load(`${weight} 40px ${FONT_FAMILY}`, FONT_SAMPLE).catch(() => {});
 
@@ -38,7 +40,10 @@ function connect() {
     } catch {
       return;
     }
-    if (data.type === 'state' && data.state?.mode === 'sea') latest = data.state;
+    if (data.type === 'state' && data.state?.mode === 'sea') {
+      latest = data.state;
+      commentary.update(latest, performance.now());
+    }
     if (data.type === 'status') status = data.status;
     if (data.type === 'events') {
       const now = performance.now();

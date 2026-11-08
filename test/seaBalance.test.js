@@ -123,6 +123,41 @@ test('the comeback buff is announced once per team per event', () => {
   assert.ok(calls[0].multiplier >= SEA_BALANCE.announceAt);
 });
 
+test('medal-table and headcount buffs alone do not trigger comeback calls (they are always on)', () => {
+  let state = createMatch(0, rng);
+  for (const [id, code] of [['v1', 'VN'], ['v2', 'VN'], ['v3', 'VN'], ['i1', 'ID']]) state = applyAction(state, comment(id, code), 0).state;
+  state = { ...state, medals: { ...state.medals, vn: { gold: 3, silver: 0, bronze: 0 } } };
+  const r = run(state, 0, liveAt + 1_000);
+  assert.ok(toSnapshot(r.state, liveAt + 1_000, () => 1).buffs.id >= SEA_BALANCE.announceAt);
+  assert.equal(r.events.filter((e) => e.type === 'underdog').length, 0);
+});
+
+test('comeback calls are rate-limited across teams', () => {
+  let state = createMatch(0, rng);
+  const fans = [['v1', 'VN'], ['v2', 'VN'], ['t1', 'TH'], ['i1', 'ID'], ['p1', 'PH']];
+  for (const [id, code] of fans) state = applyAction(state, comment(id, code), 0).state;
+  state = run(state, 0, liveAt).state;
+  for (const id of ['v1', 'v2']) state = applyAction(state, gift(id, 99), liveAt + 10).state;
+  const r = run(state, liveAt + 10, liveAt + 1_000);
+  assert.equal(r.events.filter((e) => e.type === 'underdog').length, 1, 'one call at a time');
+});
+
+test('the headcount buff counts only supporters who actually contributed', () => {
+  let state = createMatch(0, rng);
+  for (const id of ['v1', 'v2', 'v3']) state = { ...state, athletes: { ...state.athletes, [id]: { id, name: id, team: 'vn', effort: 0 } } };
+  state = applyAction(state, comment('i1', 'ID'), 0).state; // i1 góp 1 (comment)
+  const snap = toSnapshot(state, 0, () => 1);
+  assert.equal(snap.buffs.id, 1, '3 idle registrants on VN do not make Indonesia "small"');
+});
+
+test('supporters who already contributed for real cannot hop to a smaller team', () => {
+  let state = createMatch(0, rng);
+  state = applyAction(state, comment('a', 'VN'), 0).state;
+  state = applyAction(state, gift('a', 99), 10).state; // đã góp thật cho VN
+  state = applyAction(state, comment('a', 'MY'), 3_000).state;
+  assert.equal(state.athletes.a.team, 'vn');
+});
+
 test('teams far behind on the medal table start each event with national spirit', () => {
   let state = createMatch(0, rng);
   state = applyAction(state, comment('i1', 'ID'), 0).state;
