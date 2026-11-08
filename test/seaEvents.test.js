@@ -7,7 +7,6 @@ import { EVENT_MODULES } from '../server/sea/events/index.js';
 import { DRAGON_BOAT, MARATHON, WEIGHTLIFTING, SEA_SESSION } from '../server/sea/config.js';
 
 test('only events where viewer interaction drives the result are in the rotation', () => {
-  assert.deepEqual([...SEA_SESSION.eventCycle].sort(), ['dragon_boat', 'marathon', 'weightlifting']);
   assert.equal(EVENT_MODULES.archery, undefined);
   for (const id of SEA_SESSION.eventCycle) assert.ok(EVENT_MODULES[id], id);
 });

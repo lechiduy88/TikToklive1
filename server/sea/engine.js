@@ -18,7 +18,9 @@ const TOP_ATHLETES = 5;
 /** Thứ tự môn của kỳ: xoay vòng theo số kỳ để mỗi buổi mở màn bằng môn khác nhau. */
 export function eventOrderFor(session) {
   const cycle = SEA_SESSION.eventCycle;
-  return Array.from({ length: SEA_SESSION.eventsPerSession }, (_, i) => cycle[(session - 1 + i) % cycle.length]);
+  // Kỳ sau bắt đầu ngay sau môn cuối của kỳ trước => các kỳ liên tiếp đi hết cả 10 môn.
+  const start = ((session - 1) * SEA_SESSION.eventsPerSession) % cycle.length;
+  return Array.from({ length: Math.min(SEA_SESSION.eventsPerSession, cycle.length) }, (_, i) => cycle[(start + i) % cycle.length]);
 }
 
 /**

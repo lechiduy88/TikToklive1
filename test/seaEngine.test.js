@@ -167,7 +167,7 @@ test('the event scale adapts to how lively the stream is', () => {
 });
 
 test('the marathon runs live: cheering moves the runner during the event', () => {
-  let state = createMatch(0, rng, { session: 2 }); // kỳ 2 mở màn bằng marathon
+  let state = { ...createMatch(0, rng), eventOrder: ['marathon'] }; // kỳ chỉ có môn marathon
   state = applyAction(state, comment('a', 'TH'), 0).state;
   state = run(state, 0, liveAt).state;
   assert.equal(toSnapshot(state, liveAt, () => 1).event.id, 'marathon');
@@ -176,7 +176,7 @@ test('the marathon runs live: cheering moves the runner during the event', () =>
   assert.ok(toSnapshot(r.state, liveAt + 5_000, () => 1).event.view.pos.th > 0);
 });
 
-test('a session has one of each interactive event', () => {
+test('a session plays several different interactive sports', () => {
   const state = createMatch(0, rng);
-  assert.deepEqual([...state.eventOrder].sort(), ['dragon_boat', 'marathon', 'weightlifting']);
+  assert.equal(new Set(state.eventOrder).size, SEA_SESSION.eventsPerSession);
 });

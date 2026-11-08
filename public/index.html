@@ -11,16 +11,16 @@
   <style>
     html, body { margin: 0; height: 100%; background: #0b0f1a; overflow: hidden; }
     body { display: flex; align-items: center; justify-content: center; }
-    /* Luôn vừa khít cửa sổ (dọc hay ngang) và giữ đúng tỉ lệ 9:16 */
+    /* Màn hình NGANG 16:9: luôn vừa khít cửa sổ / nguồn OBS và giữ đúng tỉ lệ */
     canvas {
       display: block;
-      width: min(100vw, calc(100vh * 9 / 16));
-      height: min(100vh, calc(100vw * 16 / 9));
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
     }
   </style>
 </head>
 <body>
-  <canvas id="game" width="1080" height="1920"></canvas>
+  <canvas id="game" width="1920" height="1080"></canvas>
   <script type="module" src="js/sea/main.js"></script>
 </body>
 </html>

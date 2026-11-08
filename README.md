@@ -7,18 +7,26 @@ Có hai chế độ. Mặc định là **SEA Games LIVE**.
 | **SEA Games LIVE** — 5 nước Đông Nam Á tranh huy chương | `npm run sim` / `npm start -- --user kenh` | `/` |
 | **Đại chiến hai phe** — Đỏ vs Xanh | thêm `-- --mode battle` | `/` (hoặc `/battle.html`) |
 
-Màn hình dọc 9:16 (1080×1920), đưa vào **TikTok LIVE Studio** hoặc **OBS** dưới dạng nguồn trình duyệt.
+SEA Games LIVE dùng **màn hình ngang 16:9 (1920×1080)**: sân thi đấu bên trái, bảng tổng sắp + thông báo ở cột phải. (Chế độ hai phe vẫn là màn dọc 9:16.) Đưa vào **TikTok LIVE Studio** hoặc **OBS** dưới dạng nguồn trình duyệt 1920×1080.
 
 ## SEA Games LIVE
 
-Người xem gõ `VN`, `TH`, `ID`, `PH`, `MY` (hoặc `1`–`5`, hoặc tên nước) để vào đội tuyển. Mỗi **kỳ đại hội** (~7–8 phút):
+Người xem gõ `VN`, `TH`, `ID`, `PH`, `MY` (hoặc `1`–`5`, hoặc tên nước) để vào đội tuyển. Mỗi **kỳ đại hội** (~12 phút):
 
 1. **Khai mạc** (20s): chọn đội, xem lịch thi đấu và bảng tổng sắp toàn mùa.
-2. **3 môn thi** (mỗi môn ~1.5–2.5 phút, chỉ các môn mà tương tác của người xem quyết định trực tiếp kết quả), mỗi môn: giới thiệu → thi đấu → bục trao huy chương 🥇🥈🥉 (chỉ đội có tham gia mới được huy chương).
-   - 🚣 **Đua thuyền rồng**: sức tiếp cộng dồn thành quãng đường; 3 thuyền về đích đầu giành huy chương (tối đa 2.5 phút).
-   - 🏃 **Chạy marathon** (2 phút): sức tiếp làm vận động viên tăng tốc, **ngừng cổ vũ là chậm lại** — phải cổ vũ liên tục; xếp hạng theo quãng đường khi hết giờ.
-   - 🏋️ **Cử tạ**: 4 lượt × 25 giây, đội nâng yếu nhất mỗi lượt bị loại; đội trụ lại cuối giành Vàng.
+2. **5 môn thi** (mỗi môn ~1.5–2.5 phút), xoay vòng trong **10 môn** — 2 kỳ liên tiếp là đủ 10 môn. Môn nào cũng do tương tác của người xem quyết định kết quả. Mỗi môn: giới thiệu → thi đấu → bục trao huy chương 🥇🥈🥉 (chỉ đội có tham gia mới được huy chương).
+
+   | Kiểu luật chơi | Môn | Người xem làm gì |
+   |---|---|---|
+   | Đua về đích | 🚣 Đua thuyền rồng · 🏊 Bơi lội · 🧗 Leo núi | Tiếp sức = tiến lên; 3 đội về đích đầu giành huy chương |
+   | Sức bền (2 phút) | 🏃 Marathon · 🚴 Đua xe đạp | Tiếp sức = tăng tốc; **ngừng cổ vũ là chậm lại** |
+   | Loại trực tiếp | 🏋️ Cử tạ | 4 lượt × 25s, đội nâng yếu nhất mỗi lượt bị loại |
+   | Giữ cầu (2 phút) | 🏐 Cầu mây | Cầu rơi dần, tiếp sức để tâng; **rơi cầu là bị loại** |
+   | Lấy đà rồi ném | 💪 Đẩy tạ · 🏹 Ném lao · 🦘 Nhảy xa | 3 lượt × 30s lấy đà rồi ném; tính lượt xa nhất |
+
 3. **Bế mạc**: quốc gia vô địch (bằng nhau tuyệt đối thì đồng vô địch), vận động viên xuất sắc.
+
+Thêm môn mới: khai báo trong `SPORTS` ([server/sea/config.js](server/sea/config.js)) với một kiểu luật chơi có sẵn và thêm vào `SEA_SESSION.eventCycle`; số môn mỗi kỳ chỉnh bằng `EVENTS_PER_SESSION`.
 
 Đội tuyển của mỗi người được giữ sang kỳ sau. Bảng tổng sắp toàn mùa lưu ở `data/medals.json`.
 
@@ -128,7 +136,7 @@ server/
     config.js         đội tuyển, độ dài giai đoạn, cân bằng sức tiếp/quà
     engine.js         vòng đời kỳ đại hội: khai mạc → môn thi × N → bế mạc
     actions.js        tương tác → chọn đội + sức tiếp (giới hạn quà, để dành)
-    events/           các môn: dragonBoat, marathon, weightlifting
+    events/           5 kiểu luật chơi: race, endurance, weightlifting (loại), survival, throw
     medals.js         bảng tổng sắp; roster.js đội tuyển; snapshot.js dữ liệu màn hình
   config.js           thông số cân bằng chế độ 2 phe
   game/               chế độ 2 phe (logic thuần, có unit test)
@@ -143,7 +151,7 @@ server/
     simulator.js      người xem giả lập
   store/playerStore.js  lưu XP/cấp độ; medalStore.js bảng huy chương toàn mùa
 public/               màn hình game (canvas) + bảng điều khiển
-  index.html + js/sea/  màn hình SEA Games (cờ, 3 sân thi đấu, nghi lễ, HUD)
+  index.html + js/sea/  màn hình SEA Games ngang 16:9 (cờ, 5 cảnh thi đấu, nghi lễ, HUD)
   battle.html + js/     màn hình đại chiến hai phe
 test/                 unit test (node --test)
 ```

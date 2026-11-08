@@ -10,9 +10,10 @@ function weakest(ev) {
 
 export const weightlifting = Object.freeze({
   id: 'weightlifting',
-  name: 'Cử tạ',
-  icon: '🏋️',
-  rule: 'Mỗi lượt 10 giây · đội nâng yếu nhất bị loại',
+  kind: 'elimination',
+  name: WEIGHTLIFTING.name,
+  icon: WEIGHTLIFTING.icon,
+  rule: WEIGHTLIFTING.rule,
   maxMs: WEIGHTLIFTING.roundMs * (TEAM_IDS.length - 1) + 1_000,
 
   create(now) {

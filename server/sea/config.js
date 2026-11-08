@@ -26,10 +26,35 @@ export const SEA_PHASE_MS = Object.freeze({
   closing: secondsFromEnv('CLOSING_SECONDS', 15_000),
 });
 
+// ---- 10 môn thể thao, 5 kiểu luật chơi (môn nào cũng do tương tác người xem quyết định) ----
+//  race        : tiếp sức = tiến lên; 3 đội về đích đầu giành huy chương
+//  endurance   : tiếp sức = tăng tốc; tốc độ còn keepPerSecond mỗi giây nếu không ai cổ vũ
+//  elimination : mỗi lượt roundMs, đội yếu nhất bị loại
+//  survival    : quả cầu rơi fallPerSecond (sau graceMs); tiếp sức để giữ trên không; rơi là bị loại
+//  throw       : mỗi lượt attemptMs tiếp sức lấy đà, hết lượt thì ném; tính lượt xa nhất
+const RACE = { kind: 'race', track: 1000, finishers: 3, maxMs: 150_000, buffMinLead: 150 };
+const ENDURANCE = { kind: 'endurance', durationMs: 120_000, keepPerSecond: 0.75, buffMinLead: 200 };
+const THROW = { kind: 'throw', attempts: 3, attemptMs: 30_000 };
+const freezeAll = (table) => Object.freeze(Object.fromEntries(Object.entries(table).map(([k, v]) => [k, Object.freeze(v)])));
+
+export const SPORTS = freezeAll({
+  dragon_boat: { ...RACE, name: 'Đua thuyền rồng', icon: '🚣', rule: 'Comment, thả tim để chèo · về đích trước giành Vàng' },
+  swimming: { ...RACE, name: 'Bơi lội 200m', icon: '🏊', rule: 'Mỗi lượt tiếp sức là một sải bơi · chạm tường trước giành Vàng' },
+  climbing: { ...RACE, name: 'Leo núi', icon: '🧗', rule: 'Tiếp sức để leo lên · chạm đỉnh trước giành Vàng' },
+  marathon: { ...ENDURANCE, name: 'Chạy marathon', icon: '🏃', rule: 'Cổ vũ liên tục để giữ tốc độ · ngừng là chậm lại!', expectedMeters: 4_000 },
+  cycling: { ...ENDURANCE, name: 'Đua xe đạp', icon: '🚴', rule: 'Đạp liên tục để giữ tốc độ · xe trôi lâu hơn chạy bộ', keepPerSecond: 0.85, expectedMeters: 12_000, buffMinLead: 600 },
+  weightlifting: { kind: 'elimination', name: 'Cử tạ', icon: '🏋️', rule: 'Mỗi lượt 25 giây · đội nâng yếu nhất bị loại', roundMs: 25_000, buffMinLead: 3 },
+  sepak_takraw: { kind: 'survival', name: 'Cầu mây', icon: '🏐', rule: 'Tiếp sức để giữ quả cầu trên không · rơi cầu là bị loại', durationMs: 120_000, graceMs: 8_000, startHeight: 0.6, fallPerSecond: 0.12, buffMinLead: 0.2 },
+  shot_put: { ...THROW, name: 'Đẩy tạ', icon: '💪', rule: 'Tiếp sức để lấy đà · 3 lượt đẩy, tính lượt xa nhất', maxDistance: 23, unit: 'm', buffMinLead: 4 },
+  javelin: { ...THROW, name: 'Ném lao', icon: '🏹', rule: 'Tiếp sức để lấy đà · 3 lượt ném, tính lượt xa nhất', maxDistance: 95, unit: 'm', buffMinLead: 15 },
+  long_jump: { ...THROW, name: 'Nhảy xa', icon: '🦘', rule: 'Tiếp sức để chạy đà · 3 lượt nhảy, tính lượt xa nhất', maxDistance: 9, unit: 'm', buffMinLead: 1.5 },
+});
+
 export const SEA_SESSION = Object.freeze({
-  // Chỉ các môn mà tương tác của người xem quyết định trực tiếp kết quả; mỗi kỳ chơi đủ 3 môn (~1.5–2.5 phút/môn).
-  eventsPerSession: Number(process.env.EVENTS_PER_SESSION) || 3,
-  eventCycle: Object.freeze(['dragon_boat', 'marathon', 'weightlifting']),
+  // Mỗi kỳ chơi eventsPerSession môn; các kỳ liên tiếp xoay vòng để đủ 10 môn.
+  eventsPerSession: Number(process.env.EVENTS_PER_SESSION) || 5,
+  // Xen kẽ các kiểu luật chơi để không bao giờ 2 môn giống nhau liền nhau.
+  eventCycle: Object.freeze(['dragon_boat', 'marathon', 'shot_put', 'sepak_takraw', 'weightlifting', 'swimming', 'cycling', 'javelin', 'climbing', 'long_jump']),
 });
 
 // Quy đổi tương tác => "sức tiếp" (effort) cho đội.
@@ -77,15 +102,10 @@ export const SEA_BALANCE = Object.freeze({
   announceAt: 1.4,
 });
 
-// Đua thuyền rồng: cộng dồn tới đích (scale sức tiếp = cả đường đua).
-export const DRAGON_BOAT = Object.freeze({ track: 1000, finishers: 3, maxMs: 150_000, buffMinLead: 150 });
-
-// Chạy marathon (sức bền): sức tiếp tăng TỐC ĐỘ, tốc độ còn lại keepPerSecond mỗi giây nếu không ai cổ vũ
-// => phải cổ vũ đều tay suốt durationMs. Đội tiếp sức ở mức trung bình chạy được khoảng expectedMeters.
-export const MARATHON = Object.freeze({ durationMs: 120_000, keepPerSecond: 0.75, expectedMeters: 4_000, buffMinLead: 200 });
-
-// Cử tạ: mỗi lượt roundMs, đội có lực nâng thấp nhất bị loại; đội trụ lại cuối giành Vàng (4 lượt ≈ 100 giây).
-export const WEIGHTLIFTING = Object.freeze({ roundMs: 25_000, buffMinLead: 3 });
+// Bí danh tiện dùng (và cho test) — thông số nằm trong SPORTS.
+export const DRAGON_BOAT = SPORTS.dragon_boat;
+export const MARATHON = SPORTS.marathon;
+export const WEIGHTLIFTING = SPORTS.weightlifting;
 
 // XP mỗi môn (lưu qua nhiều buổi live). Phần từ quà bị giới hạn để cấp độ không "mua" được.
 export const SEA_XP = Object.freeze({

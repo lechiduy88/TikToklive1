@@ -1,5 +1,6 @@
-// Thông tin hiển thị của 5 đội tuyển. Thứ tự và id phải khớp server/sea/config.js (SEA_TEAMS).
-import { W } from '../layout.js';
+// Thông tin hiển thị của 5 đội tuyển và vị trí làn/cột của mỗi đội trên màn hình ngang.
+// Thứ tự và id phải khớp server/sea/config.js (SEA_TEAMS).
+import { ARENA, ARENA_W, ARENA_H } from './stage.js';
 
 export const TEAMS = Object.freeze([
   { id: 'vn', name: 'Việt Nam', short: 'VN', number: '1', color: '#e8384f', light: '#ff8a96', dark: '#7c1424' },
@@ -12,15 +13,18 @@ export const TEAMS = Object.freeze([
 export const TEAM = Object.freeze(Object.fromEntries(TEAMS.map((t) => [t.id, t])));
 const FALLBACK = Object.freeze({ id: '?', name: '?', short: '?', number: '', color: '#888', light: '#ccc', dark: '#333' });
 export const teamOf = (id) => TEAM[id] ?? FALLBACK;
+const indexOf = (teamId) => Math.max(0, TEAMS.findIndex((t) => t.id === teamId));
 
-// Vùng thi đấu (giữa HUD trên và bảng huy chương dưới) chia 5 cột theo thứ tự đội.
-export const ARENA = Object.freeze({ top: 196, bottom: 1340, left: 40, right: W - 40 });
-export const COLUMN_W = (ARENA.right - ARENA.left) / TEAMS.length;
+// 5 làn NGANG (đua, chạy, ném) bên dưới dải tiêu đề HEADER_H (khung "LƯỢT 2/3 ·..." không che làn đầu).
+export const HEADER_H = 64;
+export const LANES_TOP = ARENA.top + HEADER_H;
+export const LANE_H = (ARENA_H - HEADER_H) / TEAMS.length;
+export const laneTop = (teamId) => LANES_TOP + LANE_H * indexOf(teamId);
+export const laneY = (teamId) => laneTop(teamId) + LANE_H / 2;
 
-export function columnX(teamId) {
-  const index = TEAMS.findIndex((t) => t.id === teamId);
-  return ARENA.left + COLUMN_W * (Math.max(0, index) + 0.5);
-}
+// 5 CỘT dọc (cử tạ, cầu mây, leo núi): mỗi cột rộng COLUMN_W.
+export const COLUMN_W = ARENA_W / TEAMS.length;
+export const columnX = (teamId) => ARENA.left + COLUMN_W * (indexOf(teamId) + 0.5);
 
 export const MEDAL_EMOJI = Object.freeze({ gold: '🥇', silver: '🥈', bronze: '🥉' });
 export const MEDAL_COLOR = Object.freeze({ gold: '#ffd54a', silver: '#d7dde8', bronze: '#d98a4b' });

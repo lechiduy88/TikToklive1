@@ -12,6 +12,7 @@ function eventView(state, now) {
   const mod = EVENT_MODULES[state.event.id];
   return {
     id: mod.id,
+    kind: mod.kind,
     name: mod.name,
     icon: mod.icon,
     rule: mod.rule,
